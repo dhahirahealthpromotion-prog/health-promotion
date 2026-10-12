@@ -1,0 +1,182 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Healthcare institution or system supervisor user",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "description": "Numeric identifier of the user or institution"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the institution or supervisor",
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "enum": ["supervisor", "institution", "immunization"],
+          "description": "Role classification"
+        },
+        "pin": {
+          "type": "string",
+          "description": "Access security PIN",
+          "maxLength": 50
+        },
+        "state": {
+          "type": "string",
+          "description": "State / Wilayat or regional zone",
+          "maxLength": 100
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix millisecond timestamp of last update"
+        }
+      },
+      "required": ["id", "name", "role"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Monthly activity report for partnerships and health promotion initiatives",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "description": "Unique numeric report ID"
+        },
+        "institutionId": {
+          "type": "number",
+          "description": "Foreign key reference to institution User ID"
+        },
+        "year": {
+          "type": "number",
+          "description": "Activity calendar year"
+        },
+        "month": {
+          "type": "number",
+          "description": "Month number between 1 and 12"
+        },
+        "date": {
+          "type": "string",
+          "description": "Activity date in ISO format YYYY-MM-DD",
+          "maxLength": 20
+        },
+        "entryPerson": {
+          "type": "string",
+          "description": "Full name of the data entry person",
+          "maxLength": 150
+        },
+        "categoryType": {
+          "type": "string",
+          "enum": ["partnerships", "initiatives"],
+          "description": "High level reporting category"
+        },
+        "partnershipTitle": {
+          "type": "string",
+          "description": "Title of community partnership",
+          "maxLength": 300
+        },
+        "partnershipEntity": {
+          "type": "string",
+          "description": "Partnering organization or entity name",
+          "maxLength": 300
+        },
+        "partnershipGoal": {
+          "type": "string",
+          "description": "Objectives and goals of the partnership",
+          "maxLength": 1000
+        },
+        "initiativeType": {
+          "type": "string",
+          "description": "Initiative classification",
+          "maxLength": 100
+        },
+        "initiativeTypeLabel": {
+          "type": "string",
+          "description": "Display label for initiative type",
+          "maxLength": 150
+        },
+        "categoryName": {
+          "type": "string",
+          "description": "Health promotion category domain",
+          "maxLength": 200
+        },
+        "subItem": {
+          "type": "string",
+          "description": "Sub-activity item details",
+          "maxLength": 300
+        },
+        "beneficiariesCount": {
+          "type": "number",
+          "description": "Total number of citizens/patients benefiting"
+        },
+        "notes": {
+          "type": "string",
+          "description": "General observations and narrative notes",
+          "maxLength": 2000
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix millisecond timestamp of last update"
+        }
+      },
+      "required": ["id", "institutionId", "entryPerson"]
+    },
+    "AppConfig": {
+      "title": "AppConfig",
+      "description": "System-wide parameters, security credentials, and branding metadata",
+      "type": "object",
+      "properties": {
+        "appName": {
+          "type": "string",
+          "description": "Branded application display title",
+          "maxLength": 200
+        },
+        "customLogo": {
+          "type": "string",
+          "description": "Base64 or URL string of custom emblem"
+        },
+        "supervisorPassword": {
+          "type": "string",
+          "description": "Encrypted or hashed supervisor authentication secret",
+          "maxLength": 100
+        },
+        "immunizationPassword": {
+          "type": "string",
+          "description": "Health promotion administrative password secret",
+          "maxLength": 100
+        },
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix millisecond timestamp of last update"
+        }
+      }
+    },
+    "DropdownConfig": {
+      "title": "DropdownConfig",
+      "description": "Dynamic configurable dropdown classifications",
+      "type": "object",
+      "properties": {
+        "updatedAt": {
+          "type": "number",
+          "description": "Unix millisecond timestamp of last update"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of healthcare institutions and authorized supervisor identities"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Live transactional monthly health promotion and partnership reports"
+    },
+    "/config/{configId}": {
+      "schema": "AppConfig",
+      "description": "Application settings and dropdown classification configuration documents"
+    }
+  }
+}

@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="theme-color" content="#1E3A8A" />
+    <meta name="application-name" content="برنامج الإجادة المؤسسية" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="الإجادة المؤسسية" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="description" content="تطبيق محلي لإدارة وتقارير برنامج الإجادة المؤسسية لقسم تعزيز الصحة. يعمل بدون إنترنت ويحفظ البيانات محلياً." />
+    
+    <!-- OpenGraph / Social Cards (Netlify, WhatsApp, Social Previews) -->
+    <meta property="og:title" content="برنامج الإجادة المؤسسية" />
+    <meta property="og:description" content="تطبيق محلي لإدارة وتقارير برنامج الإجادة المؤسسية لقسم تعزيز الصحة. يعمل بدون إنترنت ويحفظ البيانات محلياً." />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="برنامج الإجادة المؤسسية" />
+    <meta name="twitter:image" content="/logo.png" />
+
+    <!-- Web App Manifest for Desktop & Mobile Installation -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Standard Browser Favicons (Netlify, Chrome, Firefox, Safari, Edge) -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+
+    <!-- Apple Touch Icons for iOS Safari Home Screen -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167x167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
+
+    <!-- Windows Taskbar and Tile Configuration -->
+    <meta name="msapplication-TileColor" content="#1E3A8A" />
+    <meta name="msapplication-TileImage" content="/mstile-150x150.png" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <title>برنامج الإجادة المؤسسية</title>
+
+    <script>
+      // Global Emergency Recovery and Cache Clearance Engine
+      window.__APP_LOADED__ = false;
+      
+      // Define global recovery function
+      window.clearCacheAndReload = function() {
+        console.log("Starting full cache clearance and reload...");
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {
+          console.error("Local storage clear failed:", e);
+        }
+
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            return Promise.all(
+              names.map(function(name) {
+                return caches.delete(name);
+              })
+            );
+          }).then(unregisterSWAndReload).catch(unregisterSWAndReload);
+        } else {
+          unregisterSWAndReload();
+        }
+      };
+
+      function unregisterSWAndReload() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            return Promise.all(
+              registrations.map(function(reg) {
+                return reg.unregister();
+              })
+            );
+          }).then(function() {
+            window.location.reload(true);
+          }).catch(function() {
+            window.location.reload(true);
+          });
+        } else {
+          window.location.reload(true);
+        }
+      }
+
+      // Capture errors globally to diagnose and display recovery option instead of blank screen
+      window.addEventListener('error', function(event) {
+        // Ignore resource loading errors (e.g. images, stylesheets)
+        if (event.target && (event.target.tagName === 'IMG' || event.target.tagName === 'LINK' || event.target.tagName === 'SCRIPT')) {
+          return;
+        }
+        // Ignore ResizeObserver errors which are harmless
+        if (event.message && event.message.includes('ResizeObserver')) {
+          return;
+        }
+        console.error("App captured global error:", event.error || event.message);
+        if (!window.__APP_LOADED__) {
+          showEmergencyUI(event.message || "Failed to load application assets");
+        }
+      }, true);
+
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error("App captured unhandled rejection:", event.reason);
+        if (!window.__APP_LOADED__) {
+          var msg = event.reason ? (event.reason.message || String(event.reason)) : "Promise rejection occurred";
+          showEmergencyUI(msg);
+        }
+      });
+
+      function showEmergencyUI(errorText) {
+        var loaderMessage = document.getElementById('preloader-status-text');
+        var loaderAction = document.getElementById('preloader-trouble');
+        if (loaderMessage) {
+          loaderMessage.innerHTML = "حدث خطأ أثناء تحميل الملفات اللازمة لتشغيل التطبيق.";
+          loaderMessage.style.color = "#991B1B";
+        }
+        if (loaderAction) {
+          loaderAction.innerHTML = `
+            <div style="background-color: #FEF2F2; border-right: 4px solid #EF4444; padding: 0.85rem; border-radius: 0.5rem; margin-top: 1rem; margin-bottom: 1.5rem; text-align: right; font-size: 0.85rem; color: #991B1B; font-family: monospace; word-break: break-all; direction: ltr;">
+              ⚠️ Error: ${errorText}
+            </div>
+            <button onclick="window.clearCacheAndReload()" style="width: 100%; cursor: pointer; background: linear-gradient(135deg, #1D4ED8 0%, #1E3A8A 100%); color: white; border: none; padding: 0.95rem 1.5rem; font-size: 1.1rem; font-weight: bold; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35); outline: none; transition: transform 0.2s; font-family: 'Tajawal', sans-serif;">
+              تحديث التطبيق ومسح الذاكرة المؤقتة 🔄
+            </button>
+            <p style="font-size: 0.8rem; color: #6B7280; margin-top: 0.85rem;">
+              سيتم تفريغ الملفات المؤقتة التالفة وتنزيل أحدث إصدار آمن متوافق.
+            </p>
+          `;
+          loaderAction.style.display = "block";
+        }
+      }
+    </script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+        "react/": "https://aistudiocdn.com/react@^19.2.1/",
+        "react": "https://aistudiocdn.com/react@^19.2.1"
+      }
+    }
+    </script>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              gold: {
+                light: '#D4AF37',
+                dark: '#FBBF24',
+                rich: '#B38728'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Defer loading of non-critical external libraries to prevent parser-blocking and white screen delay -->
+    <script defer src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf-autotable.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+      body { 
+        font-family: 'Tajawal', sans-serif; 
+        -webkit-tap-highlight-color: transparent;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+      
+      label { 
+        display: block; 
+        font-size: 0.85rem; 
+        font-weight: 800; 
+        color: #1F2937; 
+        margin-bottom: 0.35rem; 
+      }
+      @media (min-width: 640px) {
+        label { font-size: 0.95rem; margin-bottom: 0.5rem; }
+      }
+      html.dark label { color: #F9FAFB; }
+      
+      .input-style { 
+        width: 100%; 
+        padding: 0.6rem 0.85rem; 
+        font-size: 16px; /* 16px prevents iOS zoom-in */
+        line-height: 1.4;
+        background-color: #ffffff; 
+        border: 2px solid #E5E7EB; 
+        border-radius: 0.75rem; 
+        color: #111827; 
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+        min-height: 44px; /* Touch target accessibility */
+      }
+      @media (min-width: 640px) {
+        .input-style {
+          padding: 0.75rem 1.1rem;
+          font-size: 1.05rem;
+          min-height: 46px;
+        }
+      }
+      .input-style:focus { 
+        border-color: #1D4ED8; 
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15); 
+      }
+      html.dark .input-style { 
+        color: #FFFFFF; 
+        background-color: #1F2937; 
+        border-color: #374151; 
+      }
+      html.dark .input-style:focus { 
+        border-color: #3B82F6; 
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); 
+      }
+
+      /* Custom mobile scrollbar */
+      .scrollbar-hidden::-webkit-scrollbar { display: none; }
+      .scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+      html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+
+      .golden-frame {
+        border: 6px solid #1E3A8A;
+        box-shadow: 0 0 25px rgba(30, 58, 138, 0.35), inset 0 0 10px rgba(30, 58, 138, 0.15);
+        position: relative;
+        background-clip: padding-box;
+      }
+      @media (min-width: 640px) {
+        .golden-frame {
+          border-width: 8px;
+          box-shadow: 0 0 35px rgba(30, 58, 138, 0.35), inset 0 0 15px rgba(30, 58, 138, 0.2);
+        }
+      }
+      html.dark .golden-frame {
+        border-color: #3B82F6;
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.35), inset 0 0 15px rgba(59, 130, 246, 0.2);
+      }
+      @media (min-width: 640px) {
+        html.dark .golden-frame {
+          box-shadow: 0 0 45px rgba(59, 130, 246, 0.4), inset 0 0 20px rgba(59, 130, 246, 0.25);
+        }
+      }
+      
+      .golden-text { color: #926A0E; }
+      html.dark .golden-text { color: #FBBF24; }
+      
+      .dropdown-button { 
+        background-color: #F3F4F6; 
+        border: 2px solid #E5E7EB; 
+        color: #111827;
+        font-weight: 700;
+      }
+      html.dark .dropdown-button { 
+        background-color: #374151; 
+        border-color: #4B5563; 
+        color: #F9FAFB; 
+      }
+
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+      .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+      @media print { .no-print { display: none !important; } }
+      
+      html.dark body { background-color: #0F172A; }
+      html.dark .bg-white { background-color: #1E293B !important; }
+      html.dark .text-gray-800 { color: #F1F5F9 !important; }
+      html.dark .text-gray-700 { color: #E2E8F0 !important; }
+      html.dark .text-blue-800 { color: #60A5FA !important; }
+    </style>
+
+    <script>
+      window.__BUILD_ID__ = "build_20260602_v25";
+      // Clear legacy browser caches to ensure latest updates are loaded
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+             caches.delete(name);
+          }
+        });
+      }
+
+      // Register the pass-through service worker required for PWA installation
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(reg) {
+              console.log('Service Worker Registered for PWA installation', reg);
+              reg.update();
+            })
+            .catch(function(err) {
+              console.warn('Service Worker failed:', err.message);
+            });
+        });
+      }
+      
+      // Force reload once if from cache (optional, but helps with aggressive browsers)
+      window.addEventListener('pageshow', function (event) {
+          if (event.persisted) {
+              window.location.reload();
+          }
+      });
+    </script>
+</head>
+<body class="bg-slate-100 text-gray-900 transition-colors duration-300">
+    <div id="root">
+        <!-- Arabic Pre-loader: shown during early load, automatically discarded by React mount -->
+        <div id="app-preloader" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #F8FAFC; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; font-family: 'Tajawal', sans-serif; direction: rtl;">
+            <div style="display: flex; flex-direction: column; align-items: center; max-width: 380px; width: 90%; padding: 2rem; text-align: center; box-sizing: border-box;">
+                
+                <!-- Beautiful pulsating target ring with center logo background layout -->
+                <div style="position: relative; width: 90px; height: 90px; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: absolute; width: 100%; height: 100%; border: 4px solid #1E3A8A; border-top-color: #3B82F6; border-radius: 50%; animation: preloader-spin 1s linear infinite;"></div>
+                    <div style="position: absolute; width: calc(100% - 16px); height: calc(100% - 16px); background-color: #1E3A8A; border-radius: 50%; opacity: 0.12; animation: preloader-pulse 1.8s ease-in-out infinite;"></div>
+                    <!-- Small medical visual cue -->
+                    <span style="font-size: 2rem; color: #1E3A8A; z-index: 10; animation: preloader-bounce 1.5s ease-in-out infinite;">✨</span>
+                </div>
+                
+                <h2 style="font-size: 1.4rem; font-weight: 800; color: #1E3A8A; margin: 0 0 0.5rem 0;">برنامج الإجادة المؤسسية</h2>
+                <p id="preloader-status-text" style="font-size: 1rem; color: #1E40AF; opacity: 0.9; margin: 0 0 1.5rem 0; font-weight: 500; min-height: 1.5rem; transition: color 0.3s;">جاري تهيئة وتحديث ملفات التطبيق...</p>
+                
+                <!-- Action section to clear cache or show diagnostic if loading takes too long -->
+                <div id="preloader-trouble" style="display: none; animation: preloader-fade 0.5s ease forwards; width: 100%;">
+                    <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: #4B5563; font-weight: 500;">هل استغرق التحميل وقتاً طويلاً؟</p>
+                    <button onclick="window.clearCacheAndReload()" style="width: 100%; cursor: pointer; background-color: #D4AF37; color: #111827; border: none; padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: bold; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(212, 175, 55, 0.2); transition: all 0.2s; font-family: 'Tajawal', sans-serif;">🔄 إصلاح وتحديث التطبيق فوراً</button>
+                </div>
+            </div>
+            
+            <style>
+                @keyframes preloader-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes preloader-pulse { 0%, 100% { transform: scale(0.9); opacity: 0.15; } 50% { transform: scale(1.1); opacity: 0.3; } }
+                @keyframes preloader-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+                @keyframes preloader-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            </style>
+            <script>
+                // Show trouble-shooting button if loading takes more than 7 seconds
+                setTimeout(function() {
+                    var troubleshooter = document.getElementById('preloader-trouble');
+                    if (troubleshooter) {
+                        troubleshooter.style.display = 'block';
+                    }
+                    var statusText = document.getElementById('preloader-status-text');
+                    if (statusText) {
+                        statusText.innerHTML = "تهيئة الاتصال ببيانات الإجادة المؤسسية...";
+                    }
+                }, 7000);
+            </script>
+        </div>
+    </div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

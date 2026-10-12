@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'dhahirahealthpromotion@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for User documents
+    function isValidUser(data) {
+      return data.id is number &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.role in ['supervisor', 'institution', 'immunization'] &&
+        (!('pin' in data) || (data.pin is string && data.pin.size() <= 50)) &&
+        (!('state' in data) || (data.state == null || (data.state is string && data.state.size() <= 100))) &&
+        (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Validation for Report documents
+    function isValidReport(data) {
+      return data.id is number &&
+        data.institutionId is number &&
+        data.entryPerson is string && data.entryPerson.size() > 0 && data.entryPerson.size() <= 150 &&
+        (!('categoryType' in data) || (data.categoryType in ['partnerships', 'initiatives'])) &&
+        (!('partnershipTitle' in data) || (data.partnershipTitle == null || (data.partnershipTitle is string && data.partnershipTitle.size() <= 300))) &&
+        (!('partnershipEntity' in data) || (data.partnershipEntity == null || (data.partnershipEntity is string && data.partnershipEntity.size() <= 300))) &&
+        (!('partnershipGoal' in data) || (data.partnershipGoal == null || (data.partnershipGoal is string && data.partnershipGoal.size() <= 1000))) &&
+        (!('notes' in data) || (data.notes == null || (data.notes is string && data.notes.size() <= 2000))) &&
+        (!('beneficiariesCount' in data) || (data.beneficiariesCount == null || data.beneficiariesCount is number)) &&
+        (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Validation for AppConfig documents
+    function isValidConfig(data) {
+      return (!('appName' in data) || (data.appName is string && data.appName.size() <= 200)) &&
+        (!('supervisorPassword' in data) || (data.supervisorPassword is string && data.supervisorPassword.size() <= 100)) &&
+        (!('immunizationPassword' in data) || (data.immunizationPassword is string && data.immunizationPassword.size() <= 100)) &&
+        (!('updatedAt' in data) || data.updatedAt is number);
+    }
+
+    // Connection testing endpoint
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+
+    // Admins metadata collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Users (Institutions and Supervisors)
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isValidId(userId) && isValidUser(incoming());
+      allow update: if isValidId(userId) && isValidUser(incoming());
+      allow delete: if isAdmin() || isSignedIn();
+    }
+
+    // Monthly Reports
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create: if isValidId(reportId) && isValidReport(incoming());
+      allow update: if isValidId(reportId) && isValidReport(incoming());
+      allow delete: if isAdmin() || isSignedIn();
+    }
+
+    // Application and Dropdowns Configuration
+    match /config/{configId} {
+      allow read: if true;
+      allow create, update: if isValidId(configId) && isValidConfig(incoming());
+      allow delete: if isAdmin();
+    }
+  }
+}
